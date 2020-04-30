@@ -8,7 +8,7 @@ namespace RW.DPSCertificateTool
     public class CreateDeviceCert
     {
         [Required]
-        [Option("-s", LongName ="Subject", Description = "The subject name of the new certifcate. The generated PFX file will also be named after the subject.")]
+        [Option("-s", LongName ="Subject", Description = "The subject name of the new certificate. The generated PFX file will also be named after the subject.")]
         public string SubjectName { get; set; }
 
         [Required]

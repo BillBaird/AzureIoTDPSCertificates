@@ -65,22 +65,8 @@ namespace RW.DPSCertificateTool
                         true));
 
                 if (issuingCa != null)
-                {
-                    // set the AuthorityKeyIdentifier. There is no built-in 
-                    // support, so it needs to be copied from the Subject Key 
-                    // Identifier of the signing certificate and massaged slightly.
-                    // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
-                    var issuerSubjectKey = issuingCa.Extensions["2.5.29.14"].RawData;
-                    var segment = new ArraySegment<byte>(issuerSubjectKey, 2, issuerSubjectKey.Length - 2);
-                    var authorityKeyIdentifier = new byte[segment.Count + 4];
-                    // these bytes define the "KeyID" part of the AuthorityKeyIdentifier
-                    authorityKeyIdentifier[0] = 0x30;
-                    authorityKeyIdentifier[1] = 0x16;
-                    authorityKeyIdentifier[2] = 0x80;
-                    authorityKeyIdentifier[3] = 0x14;
-                    segment.CopyTo(authorityKeyIdentifier, 4);
-                    request.CertificateExtensions.Add(new X509Extension("2.5.29.35", authorityKeyIdentifier, false));
-                }
+                    request.CertificateExtensions.Add(issuingCa.X509SubjectKeyIdentifierExtension().MakeAuthorityKey());
+
                 // DPS samples create certs with the device name as a SAN name 
                 // in addition to the subject name
                 var sanBuilder = new SubjectAlternativeNameBuilder();
@@ -103,22 +89,7 @@ namespace RW.DPSCertificateTool
                 
                 // If we are the root, add ourselves as the authority (this is what OpenSSL does)
                 if (issuingCa == null)
-                {
-                    // set the AuthorityKeyIdentifier. There is no built-in 
-                    // support, so it needs to be copied from the Subject Key 
-                    // Identifier of the signing certificate and massaged slightly.
-                    // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
-                    var caSubjectKey = subjectKeyIdentifier.RawData;
-                    var segment = new ArraySegment<byte>(caSubjectKey, 2, caSubjectKey.Length - 2);
-                    var authorityKeyIdentifier = new byte[segment.Count + 4];
-                    // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
-                    authorityKeyIdentifier[0] = 0x30;
-                    authorityKeyIdentifier[1] = 0x16;
-                    authorityKeyIdentifier[2] = 0x80;
-                    authorityKeyIdentifier[3] = 0x14;
-                    segment.CopyTo(authorityKeyIdentifier, 4);
-                    request.CertificateExtensions.Add(new X509Extension("2.5.29.35", authorityKeyIdentifier, false));
-                }
+                    request.CertificateExtensions.Add(subjectKeyIdentifier.MakeAuthorityKey());
 
                 // certificate expiry: Valid from Yesterday to Now+365 days
                 // Unless the signing cert's validity is less. It's not possible
@@ -259,20 +230,8 @@ namespace RW.DPSCertificateTool
                         X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
                         true));
 
-                // set the AuthorityKeyIdentifier. There is no built-in 
-                // support, so it needs to be copied from the Subject Key 
-                // Identifier of the signing certificate and massaged slightly.
-                // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
-                var issuerSubjectKey = signingCertificate.Extensions["2.5.29.14"].RawData;
-                var segment = new ArraySegment<byte>(issuerSubjectKey, 2, issuerSubjectKey.Length - 2);
-                var authorityKeyIdentifer = new byte[segment.Count + 4];
-                // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
-                authorityKeyIdentifer[0] = 0x30;
-                authorityKeyIdentifer[1] = 0x16;
-                authorityKeyIdentifer[2] = 0x80;
-                authorityKeyIdentifer[3] = 0x14;
-                segment.CopyTo(authorityKeyIdentifer, 4);
-                request.CertificateExtensions.Add(new X509Extension("2.5.29.35", authorityKeyIdentifer, false));
+                // set the AuthorityKeyIdentifier.
+                request.CertificateExtensions.Add(signingCertificate.X509SubjectKeyIdentifierExtension().MakeAuthorityKey());
 
                 // DPS samples create certs with the device name as a SAN name 
                 // in addition to the subject name
