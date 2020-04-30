@@ -61,7 +61,7 @@ namespace RW.DPSCertificateTool
                 // key usage: Digital Signature and Key Encipherment
                 request.CertificateExtensions.Add(
                     new X509KeyUsageExtension(
-                        X509KeyUsageFlags.KeyCertSign,
+                        X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign,
                         true));
 
                 if (issuingCa != null)
@@ -98,8 +98,27 @@ namespace RW.DPSCertificateTool
                         false));
 
                 // add this subject key identifier
-                request.CertificateExtensions.Add(
-                    new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+                var subjectKeyIdentifier = new X509SubjectKeyIdentifierExtension(request.PublicKey, false);
+                request.CertificateExtensions.Add(subjectKeyIdentifier);
+                
+                // If we are the root, add ourselves as the authority (this is what OpenSSL does)
+                if (issuingCa == null)
+                {
+                    // set the AuthorityKeyIdentifier. There is no built-in 
+                    // support, so it needs to be copied from the Subject Key 
+                    // Identifier of the signing certificate and massaged slightly.
+                    // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
+                    var caSubjectKey = subjectKeyIdentifier.RawData;
+                    var segment = new ArraySegment<byte>(caSubjectKey, 2, caSubjectKey.Length - 2);
+                    var authorityKeyIdentifier = new byte[segment.Count + 4];
+                    // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
+                    authorityKeyIdentifier[0] = 0x30;
+                    authorityKeyIdentifier[1] = 0x16;
+                    authorityKeyIdentifier[2] = 0x80;
+                    authorityKeyIdentifier[3] = 0x14;
+                    segment.CopyTo(authorityKeyIdentifier, 4);
+                    request.CertificateExtensions.Add(new X509Extension("2.5.29.35", authorityKeyIdentifier, false));
+                }
 
                 // certificate expiry: Valid from Yesterday to Now+365 days
                 // Unless the signing cert's validity is less. It's not possible
