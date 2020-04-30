@@ -70,7 +70,7 @@ namespace RW.DPSCertificateTool
                     // support, so it needs to be copied from the Subject Key 
                     // Identifier of the signing certificate and massaged slightly.
                     // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
-                    var issuerSubjectKey = issuingCa.Extensions["Subject Key Identifier"].RawData;
+                    var issuerSubjectKey = issuingCa.Extensions["x509v3 Subject Key Identifier"].RawData;
                     var segment = new ArraySegment<byte>(issuerSubjectKey, 2, issuerSubjectKey.Length - 2);
                     var authorityKeyIdentifier = new byte[segment.Count + 4];
                     // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
@@ -244,7 +244,7 @@ namespace RW.DPSCertificateTool
                 // support, so it needs to be copied from the Subject Key 
                 // Identifier of the signing certificate and massaged slightly.
                 // AuthorityKeyIdentifier is "KeyID=<subject key identifier>"
-                var issuerSubjectKey = signingCertificate.Extensions["Subject Key Identifier"].RawData;
+                var issuerSubjectKey = signingCertificate.Extensions["x509v3 Subject Key Identifier"].RawData;
                 var segment = new ArraySegment<byte>(issuerSubjectKey, 2, issuerSubjectKey.Length - 2);
                 var authorityKeyIdentifer = new byte[segment.Count + 4];
                 // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
