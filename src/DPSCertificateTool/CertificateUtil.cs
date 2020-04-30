@@ -73,7 +73,7 @@ namespace RW.DPSCertificateTool
                     var issuerSubjectKey = issuingCa.Extensions["2.5.29.14"].RawData;
                     var segment = new ArraySegment<byte>(issuerSubjectKey, 2, issuerSubjectKey.Length - 2);
                     var authorityKeyIdentifier = new byte[segment.Count + 4];
-                    // these bytes define the "KeyID" part of the AuthorityKeyIdentifer
+                    // these bytes define the "KeyID" part of the AuthorityKeyIdentifier
                     authorityKeyIdentifier[0] = 0x30;
                     authorityKeyIdentifier[1] = 0x16;
                     authorityKeyIdentifier[2] = 0x80;
